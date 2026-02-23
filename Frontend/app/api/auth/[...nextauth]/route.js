@@ -31,7 +31,6 @@ const handler = NextAuth({
             name: "Credentials",
 
             async authorize(credentials, req) {
-
                 const con = await getDB();
 
                 const [userDetails] = await con.query('SELECT * FROM users WHERE UserEmail=?;', [credentials.email]);
@@ -46,7 +45,10 @@ const handler = NextAuth({
                             'UserID': userDetails[0].UserID,
                             'name': userDetails[0].UserName,
                             'email': userDetails[0].UserEmail,
-                            'UserRole': userDetails[0].UserRole
+                            'UserRole': userDetails[0].UserRole,
+                            'CreatedAt': userDetails[0].CreatedAt,
+                            'LoginAt': userDetails[0].LoginAt,
+                            'remember': credentials.remember === "true"
                         }
                     } else {
                         throw new Error('Invalid email or password');
@@ -94,20 +96,32 @@ const handler = NextAuth({
             if (user) {
                 if (account?.provider === "google" || account?.provider === "github") {
                     const con = await getDB();
-                    const [userDetails] = await con.query("SELECT UserID, UserRole FROM users WHERE UserEmail = ?", [user.email]);
+                    const [userDetails] = await con.query("SELECT UserID, UserRole, LoginAt, CreatedAt FROM users WHERE UserEmail = ?", [user.email]);
 
                     token.UserID = userDetails[0].UserID;
                     token.UserRole = userDetails[0].UserRole;
+                    token.LoginAt = userDetails[0].LoginAt;
+                    token.CreatedAt = userDetails[0].CreatedAt;
+                    token.remember = true;
                 } else {
                     token.UserID = user.UserID;
                     token.UserRole = user.UserRole;
+                    token.LoginAt = user.LoginAt;
+                    token.CreatedAt = user.CreatedAt;
+                    token.remember = user.remember;
                 }
             }
+            token.exp = token.remember
+                ? Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30 // 30 days
+                : Math.floor(Date.now() / 1000) + 60 * 60 * 24;    // 1 day
             return token;
         },
         async session({ session, user, token }) {
             session.user.UserID = token.UserID;
             session.user.UserRole = token.UserRole;
+            session.user.LoginAt = token.LoginAt;
+            session.user.CreatedAt = token.CreatedAt;
+            session.user.remember = token.remember;
             return session;
         },
     },
@@ -120,6 +134,9 @@ const handler = NextAuth({
                 console.log(error)
             }
         },
+    },
+    jwt: {
+        maxAge: 60 * 60 * 24 * 30, // Maximum duration a jwt token can persist
     },
 });
 

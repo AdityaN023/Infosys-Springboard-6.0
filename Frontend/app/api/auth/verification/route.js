@@ -137,14 +137,14 @@ export async function POST(request) {
                     </div>
 
                     <div class="email-footer">
-                        © 2025 POSTANALYSER. All rights reserved.
+                        © 2025 JOBCHECK. All rights reserved.
                     </div>
                 </div>
 
             </body>
         </html>`
 
-    await sendEmail(recipient.email, 'Email verification Email by FakeJobPostAnalyser', html)
+    await sendEmail(recipient.email, 'Email verification Email by JOBCHECK', html)
 
     return NextResponse.json({ codeSend: true })
 }

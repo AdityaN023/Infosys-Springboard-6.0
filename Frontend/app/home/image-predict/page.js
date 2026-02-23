@@ -22,6 +22,7 @@ const ImagePredict = () => {
         register,
         handleSubmit,
         watch,
+        setValue,
         formState: { errors, isSubmitting },
         reset
     } = useForm();
@@ -46,6 +47,7 @@ const ImagePredict = () => {
                 new Date(a.predict_At).getTime()
             );
     }, [predictHistory, filters]);
+    const [isDragging, setIsDragging] = useState(false);
 
     async function getPredictHistory() {
         if (session?.user) {
@@ -80,6 +82,7 @@ const ImagePredict = () => {
                     if (getResult.success) {
                         setPredictionResult(getResult.data[0]);
                     } else {
+                        setPredictionResult(null);
                         const submission_Time = new Date();
 
                         const predictionCall = await fetch('http://127.0.0.1:5000/checkJobPost', {
@@ -155,13 +158,42 @@ const ImagePredict = () => {
         })();
     }, [session]);
 
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = () => {
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        setIsDragging(false);
+
+        const file = e.dataTransfer.files?.[0];
+        if (!file) return;
+
+        if (!["image/png", "image/jpeg", "image/jpg"].includes(file.type)) {
+            alert("Only PNG, JPG, JPEG files are allowed");
+            return;
+        }
+
+        setValue("file-upload", e.dataTransfer.files, {
+            shouldValidate: true,
+        });
+    };
+
     return (
         <div className="p-4 flex justify-center flex-col space-y-6 py-[8%] relative">
             {flagId && <ReportForm flag_id={flagId} setFlagId={setFlagId} />}
             <h1 className='text-4xl text-center font-bold'>Image Prediction</h1>
             <form className="min-w-lg mx-auto" onSubmit={handleSubmit(onSubmit)}>
                 <div className="mb-6">
-                    <label htmlFor="description" className="block mb-2.5 text-md font-medium">Job Post</label>
+                    <label htmlFor="description" className="block mb-2.5 text-md font-medium">
+                        Job Post
+                        {errors.file_upload ? <span className="ml-3 text-red-500 font-bold">{errors.file_upload.message}</span> : ''}
+                    </label>
                     {
                         previewImg
                             ? <div className="mt-2 flex justify-center rounded-lg border border-dashed border-white/25 p-2 max-w-lg relative">
@@ -172,15 +204,15 @@ const ImagePredict = () => {
                                     </svg>
                                 </button>
                             </div>
-                            : <div className="mt-2 flex justify-center rounded-lg border border-dashed border-white/25 px-6 py-10">
+                            : <div className={`mt-2 flex justify-center rounded-lg border border-dashed px-6 py-10 ${isDragging ? "border-indigo-400 bg-indigo-500/10" : "border-gray-600"}`} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
                                 <div className="text-center">
                                     <svg viewBox="0 0 24 24" fill="currentColor" data-slot="icon" aria-hidden="true" className="mx-auto size-12 text-gray-600">
                                         <path d="M1.5 6a2.25 2.25 0 0 1 2.25-2.25h16.5A2.25 2.25 0 0 1 22.5 6v12a2.25 2.25 0 0 1-2.25 2.25H3.75A2.25 2.25 0 0 1 1.5 18V6ZM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0 0 21 18v-1.94l-2.69-2.689a1.5 1.5 0 0 0-2.12 0l-.88.879.97.97a.75.75 0 1 1-1.06 1.06l-5.16-5.159a1.5 1.5 0 0 0-2.12 0L3 16.061Zm10.125-7.81a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Z" clipRule="evenodd" fillRule="evenodd" />
                                     </svg>
-                                    <div className="mt-4 flex text-sm/6 text-gray-400">
+                                    <div className='mt-4 flex text-sm/6 text-gray-400'>
                                         <label htmlFor="file-upload" className="relative cursor-pointer rounded-md bg-transparent font-semibold text-indigo-400 hover:text-indigo-300">
                                             <span>Upload a file</span>
-                                            <input {...register("file-upload", { required: true })} id="file-upload" type="file" name="file-upload" className="sr-only" accept='.png, .jpg, .jpeg' />
+                                            <input {...register("file-upload", { required: { value: true, message: 'This field is required.' } })} id="file-upload" type="file" name="file-upload" className="sr-only" accept='.png, .jpg, .jpeg' />
                                         </label>
                                         <p className="pl-1">or drag and drop</p>
                                     </div>

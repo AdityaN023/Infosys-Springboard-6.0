@@ -4,8 +4,13 @@ import { NextResponse } from "next/server";
 export async function GET(request) {
     try {
         const con = await getDB();
+        const { searchParams } = new URL(request.url);
 
-        const [flagged_posts] = await con.query('SELECT f.flag_id, j.job_text, f.flagged_time, f.reason, p.`result`, p.confidence_Level, m.version, u.UserName FROM flaggedpost f INNER JOIN jobpostsubmission j ON f.post_id  = j.post_id AND f.reviewed_by IS NULL INNER JOIN predictionresult p ON j.post_id = p.post_id INNER JOIN users u ON j.UserID = u.UserID INNER JOIN model m ON p.model_id = m.model_id;');
+        if (searchParams.get('analysis')) {
+            var [flagged_posts] = await con.query('SELECT f.flag_id, j.job_text, f.flagged_time, f.reason, p.`result`, p.confidence_Level, m.version, u.UserName, f.reviewed_by FROM flaggedpost f INNER JOIN jobpostsubmission j ON f.post_id  = j.post_id INNER JOIN predictionresult p ON j.post_id = p.post_id INNER JOIN users u ON j.UserID = u.UserID INNER JOIN model m ON p.model_id = m.model_id;');
+        } else {
+            var [flagged_posts] = await con.query('SELECT f.flag_id, j.job_text, f.flagged_time, f.reason, p.`result`, p.confidence_Level, m.version, u.UserName FROM flaggedpost f INNER JOIN jobpostsubmission j ON f.post_id  = j.post_id AND f.reviewed_by IS NULL INNER JOIN predictionresult p ON j.post_id = p.post_id INNER JOIN users u ON j.UserID = u.UserID INNER JOIN model m ON p.model_id = m.model_id;');
+        }
 
         return NextResponse.json({ "success": true, flagged_posts });
     } catch (error) {
@@ -45,12 +50,12 @@ export async function DELETE(request) {
         const params = await request.json();
         const flag_id = params.flag_id;
         const UserID = params.UserID;
-        
+
         await con.query('UPDATE flaggedpost SET reviewed_by=? WHERE flag_id=?', [UserID, flag_id]);
 
-        return NextResponse.json({'success': true});
+        return NextResponse.json({ 'success': true });
     } catch (error) {
         console.log(error)
-        return NextResponse.json({'success': false, 'error': error});
+        return NextResponse.json({ 'success': false, 'error': error });
     }
 }

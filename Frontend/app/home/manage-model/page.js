@@ -12,6 +12,61 @@ const ManagerModel = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [loadModel, setLoadModel] = useState(false);
     const [postDetails, setPostDetails] = useState(null);
+    const [addCommentsFor, setAddCommentsFor] = useState(null);
+
+    const ModelCommentForm = () => {
+        const {
+            register,
+            handleSubmit,
+            reset,
+            formState: { errors, isSubmitting }
+        } = useForm();
+
+        const onSubmit = async (data) => {
+            try {
+                const addCommentReq = await fetch(`${process.env.NEXT_PUBLIC_NEXTAUTH_URL}api/admin/model`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ 'comments': data.comments, 'model_id': addCommentsFor })
+                });
+                const addCommentRes = await addCommentReq.json();
+
+                if (addCommentRes.success) {
+                    reset();
+                    setAddCommentsFor(null);
+                    await getModels();
+                } else {
+                    console.log(addCommentRes.error);
+                }
+            } catch (error) {
+                console.log(error);
+            }
+        }
+
+        return (
+            <div className='fixed top-0 z-20 left-0 w-full'>
+                <div className='ml-64 bg-neutral-800/20 min-h-screen flex justify-center items-center'>
+                    <div className='p-6 rounded-2xl max-w-md bg-neutral-900 space-y-2 relative'>
+                        <button type="button" className="cursor-pointer absolute top-3 right-3 bg-neutral-800 hover:bg-orange-600/60 p-1 rounded-full" onClick={() => setAddCommentsFor(null)}>
+                            <svg className="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18 17.94 6M18 18 6.06 6" />
+                            </svg>
+                        </button>
+                        <h3 className='text-center text-3xl font-bold mb-4'>Add Comments</h3>
+                        <form onSubmit={handleSubmit(onSubmit)}>
+                            <div className="mb-4">
+                                <label htmlFor="comments" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                                    <p>Add comments for this model so that you can identify what is changed in this version of model</p>
+                                    {errors.comments ? <span className="text-red-500 font-bold">{errors.comments.message}</span> : ''}
+                                </label>
+                                <textarea {...register('comments', { required: { value: false }, minLength: { value: 40, message: 'Job description must have atleast 40 characters' }, maxLength: { value: 10000, message: 'Description is too long...' } })} id="comments" name="comments" rows={10} className="bg-neutral-800 border text-sm rounded-lg block min-w-full px-3 py-2.5 shadow-xs resize-none" placeholder="Add Comments..." />
+                            </div>
+                            <button type="submit" className={`w-full text-white bg-orange-600 hover:bg-orange-600/90 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={isSubmitting}>Retrain</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        )
+    }
 
     const RetrainingForm = () => {
         const {
@@ -40,7 +95,7 @@ const ManagerModel = () => {
                         await getModels();
                         await getFlaggedPosts();
                     } else {
-                        console.log(retrainModelRes.error);
+                        alert(retrainModelRes.error);
                     }
                 } else {
                     alert("Backend server not started!!!");
@@ -181,6 +236,7 @@ const ManagerModel = () => {
         <div className='p-4'>
             {postDetails && <PostDetails />}
             {isSubmitting && <RetrainingForm />}
+            {addCommentsFor && <ModelCommentForm />}
             <div className='className="p-4 flex justify-center flex-col space-y-6 py-4'>
                 <h1 className='text-4xl text-center font-bold'>Manage Models</h1>
                 <div className="relative overflow-x-auto shadow-xs rounded-lg border">
@@ -234,7 +290,7 @@ const ManagerModel = () => {
                                                     {
                                                         modelDetails.comments
                                                             ? modelDetails.comments
-                                                            : <button>Add Comments</button>
+                                                            : <button className='text-orange-400 hover:text-orange-400/80 cursor-pointer' onClick={() => setAddCommentsFor(modelDetails.model_id)}>Add Comments</button>
                                                     }
                                                 </td>
                                             </tr>

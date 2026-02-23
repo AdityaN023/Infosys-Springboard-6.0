@@ -3,7 +3,7 @@ import "@/public/loading.gif"
 import SessionWrapper from "@/component/SessionWrapper";
 
 export const metadata = {
-    title: "POSTANALYSER",
+    title: "JOBCHECK",
     description: "A application which predicts whether the job post is real or fake based on description and other factors.",
 };
 

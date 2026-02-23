@@ -27,7 +27,7 @@ export default function DashboardLayout({ children }) {
                         <li>
                             <ContentAnimeLink href="/home/dashboard" className="flex items-center px-2 py-1.5 rounded-lg hover:bg-white/20 hover:text-blue-500 group">
                                 <svg className="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6.025A7.5 7.5 0 1 0 17.975 14H10V6.025Z" /><path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.5 3c-.169 0-.334.014-.5.025V11h7.975c.011-.166.025-.331.025-.5A7.5 7.5 0 0 0 13.5 3Z" /></svg>
-                                <span className="ms-3">{session?.user.UserRole + ' '}Dashboard</span>
+                                <span className="ms-3">{session && session.user.UserRole + ' '}Dashboard</span>
                             </ContentAnimeLink>
                         </li>
                         <li>
@@ -90,19 +90,20 @@ export default function DashboardLayout({ children }) {
                                 </ul>
                             </li>
                         }
-                        <li>
-                            <div className="flex items-center px-2 py-1.5 rounded-lg hover:bg-white/20 hover:text-blue-500 group">
-                                {
-                                    session && session.user.image
-                                        ? <Image src={session.user.image} loading="eager" alt="Profile Image" width={24} height={24} className="w-6 h-6 text-gray-800 dark:text-white rounded-full" />
-                                        : <svg className="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0a8.949 8.949 0 0 0 4.951-1.488A3.987 3.987 0 0 0 13 16h-2a3.987 3.987 0 0 0-3.951 3.512A8.948 8.948 0 0 0 12 21Zm3-11a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                                        </svg>
-                                }
-
-                                <span className="flex-1 ms-3 whitespace-nowrap">{session?.user.name}</span>
-                            </div>
-                        </li>
+                        {
+                            session && <li>
+                                <ContentAnimeLink href={'/home/profile'} className="flex items-center px-2 py-1.5 rounded-lg hover:bg-white/20 hover:text-blue-500 group">
+                                    {
+                                        session.user.image
+                                            ? <Image src={session.user.image} loading="eager" alt="Profile Image" width={24} height={24} className="w-6 h-6 text-gray-800 dark:text-white rounded-full" />
+                                            : <svg className="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0a8.949 8.949 0 0 0 4.951-1.488A3.987 3.987 0 0 0 13 16h-2a3.987 3.987 0 0 0-3.951 3.512A8.948 8.948 0 0 0 12 21Zm3-11a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                            </svg>
+                                    }
+                                    <span className="flex-1 ms-3 whitespace-nowrap">{session?.user.name}</span>
+                                </ContentAnimeLink>
+                            </li>
+                        }
                         <li>
                             <button onClick={() => signOut({ callbackUrl: '/?signOut=true' })} className="flex w-full items-center px-2 py-1.5 rounded-lg hover:bg-white/20 hover:text-blue-500 group">
                                 <svg className="shrink-0 w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 12H4m12 0-4 4m4-4-4-4m3-4h2a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3h-2" /></svg>

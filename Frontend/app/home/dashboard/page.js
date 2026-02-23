@@ -6,6 +6,7 @@ import { dateTimeSplit } from '@/lib/dateTimeSplit';
 
 const Dashboard = () => {
     const [predictAnalysis, setPredictAnalysis] = useState(null);
+    const [flaggedAnalysis, setFlaggedAnalysis] = useState(null);
     const [predictHistory, setPredictHistory] = useState(null);
     const { data: session } = useSession();
 
@@ -16,14 +17,16 @@ const Dashboard = () => {
             try {
                 const UserID = session.user.UserID;
 
-                const [analysisRes, predictionRes] = await Promise.all([
+                const [analysisRes, predictionRes, flaggedRes] = await Promise.all([
                     fetch(`${process.env.NEXT_PUBLIC_NEXTAUTH_URL}api/prediction/analysis?UserID=${UserID}`),
-                    fetch(`${process.env.NEXT_PUBLIC_NEXTAUTH_URL}api/prediction?UserID=${UserID}`)
+                    fetch(`${process.env.NEXT_PUBLIC_NEXTAUTH_URL}api/prediction?UserID=${UserID}`),
+                    fetch(`${process.env.NEXT_PUBLIC_NEXTAUTH_URL}api/prediction/flagged?analysis=${true}`)
                 ]);
 
-                const [analysisData, predictionData] = await Promise.all([
+                const [analysisData, predictionData, flaggedData] = await Promise.all([
                     analysisRes.json(),
-                    predictionRes.json()
+                    predictionRes.json(),
+                    flaggedRes.json()
                 ]);
 
                 const history = [
@@ -35,6 +38,7 @@ const Dashboard = () => {
                 );
 
                 setPredictAnalysis(analysisData);
+                setFlaggedAnalysis(flaggedData);
                 setPredictHistory(history); // store in state
             } catch (e) {
                 console.error(e);
@@ -104,6 +108,25 @@ const Dashboard = () => {
                     </div>
                 </div>
             </div>
+            {session && session.user.UserRole === 'Admin' && <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="flex items-center justify-center h-24 rounded bg-neutral-900/80 border border-red-600">
+                    <div className="flex flex-col items-center">
+                        <span className="mb-2 font-semibold">Total Flagged Job Posts</span>
+                        <span className="text-2xl font-semibold tracking-tight">
+                            {console.log(flaggedAnalysis)}
+                            {flaggedAnalysis && flaggedAnalysis.flagged_posts.filter((f_post, index) => f_post.reviewed_by === null).length}
+                        </span>
+                    </div>
+                </div>
+                <div className="flex items-center justify-center h-24 rounded bg-neutral-900/80 border border-orange-400">
+                    <div className="flex flex-col items-center">
+                        <span className="mb-2 font-semibold">Reviewed Flagged Posts</span>
+                        <span className="text-2xl font-semibold tracking-tight">
+                            {flaggedAnalysis && flaggedAnalysis.flagged_posts.filter((f_post, index) => f_post.reviewed_by !== null).length}
+                        </span>
+                    </div>
+                </div>
+            </div>}
             <div className="grid grid-cols-2 gap-4">
                 <div className="rounded bg-neutral-900/80 p-6">
                     <h2 className='text-center text-2xl font-bold font-serif'>Description Based Predictions</h2>
@@ -199,7 +222,7 @@ const Dashboard = () => {
             <div className="rounded bg-neutral-900/80 mt-4 p-4 space-y-6">
                 <div className="p-2 text-lg font-medium text-left rtl:text-right">
                     Prediction History
-                    <p className="mt-1.5 text-sm font-normal text-body">Lorem ipsum dolor sit amet consectetur adipisicing elit. Vel nemo dolorem unde. Lorem ipsum dolor sit amet consectetur, adipisicing elit. Quo laudantium eligendi excepturi.</p>
+                    <p className="mt-1.5 text-sm font-normal text-body">See your prediction history of Image and Text predictions on the basis of date and time at one place.</p>
                 </div>
                 <div className="relative overflow-x-auto shadow-xs rounded-lg border">
                     <table className="w-full text-sm text-left rtl:text-right">

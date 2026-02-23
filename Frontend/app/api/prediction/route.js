@@ -6,16 +6,19 @@ export async function GET(request) {
         const con = await getDB();
         const { searchParams } = new URL(request.url);
 
-        const UserID = searchParams.get('UserID');
-        const job_text = searchParams.get('job_text');
-        const type = searchParams.get('type');
+        const UserID = searchParams.get("UserID");
+        const job_text = searchParams.get("job_text");
+        const type = searchParams.get("type");
+        const hasType = typeof type === "string" && type.length > 0;
 
-        let query = '';
+        let query = "";
         let values = [];
 
-        if (job_text && type) {
+        if (job_text && hasType) {
             query = `
-                SELECT p.result, p.confidence_Level
+                SELECT 
+                    p.result,
+                    p.confidence_Level
                 FROM jobpostsubmission j
                 INNER JOIN predictionresult p ON j.post_id = p.post_id
                 WHERE j.UserID = ?
@@ -23,26 +26,25 @@ export async function GET(request) {
                   AND j.pred_type = ?
             `;
             values = [UserID, job_text, type];
-        }
-
-        else {
+        } else {
             query = `
                 SELECT 
                     j.post_id,
-                    ${type ? 'j.job_text,' : ''}
+                    ${hasType ? 'j.job_text,' : ''}
                     p.predict_At,
                     p.result,
                     p.confidence_Level,
-                    ${type ? 'f.flag_id' : 'j.pred_type'}
+                    j.pred_type,
+                    ${hasType ? 'f.flag_id' : 'j.pred_type'}
                 FROM jobpostsubmission j
                 INNER JOIN predictionresult p ON j.post_id = p.post_id
                 LEFT JOIN flaggedpost f ON j.post_id = f.post_id
                 WHERE j.UserID = ?
-                ${type ? 'AND j.pred_type = ?' : ''}
+                ${hasType ? "AND j.pred_type = ?" : ""}
                 ORDER BY p.predict_At DESC
             `;
 
-            values = type ? [UserID, type] : [UserID];
+            values = hasType ? [UserID, type] : [UserID];
         }
 
         const [rows] = await con.query(query, values);
@@ -52,9 +54,9 @@ export async function GET(request) {
             data: rows
         });
     } catch (error) {
-        console.error('GET prediction error:', error);
+        console.error("GET prediction error:", error);
         return NextResponse.json(
-            { success: false, error },
+            { success: false, message: "Internal Server Error" },
             { status: 500 }
         );
     }
@@ -75,7 +77,7 @@ export async function POST(request) {
 
         // 3️⃣ Insert prediction
         await con.query('INSERT INTO predictionresult (post_id, result, confidence_Level, model_id) VALUES (?, ?, ?, ?)', [jobPostId, data.result, data.confidence_Level, data.model_id]);
-    
+
         await con.query('INSERT INTO logs (UserID, action_type, description) VALUES (?, ?, ?);', [data.UserID, 'prediction', `User performed ${data.type} prediction`]);
 
         await con.commit();

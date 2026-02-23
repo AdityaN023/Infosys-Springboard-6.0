@@ -25,6 +25,21 @@ const ManageUser = () => {
         }
     }
     
+    async function changeRole(e, type) {
+        const UserID = e.target.parentElement.parentElement.getAttribute('id');
+
+        const changeUserReq = await fetch(`/api/admin/users`, {
+            method: 'PUT',
+            body: JSON.stringify({UserID, type})
+        });
+        const changeUserRes = await changeUserReq.json();
+        if (changeUserRes.success) {
+            await getUsers();
+        } else {
+            console.log(changeUserRes.error);
+        }
+    }
+        
     useEffect(() => {
         (async () => {
             await getUsers();

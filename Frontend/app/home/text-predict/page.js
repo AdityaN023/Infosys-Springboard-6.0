@@ -62,6 +62,7 @@ const TextPredict = () => {
             if (getResult.success) {
                 setPredictionResult(getResult.data[0]);
             } else {
+                setPredictionResult(null)
                 const backendCheck = await checkFlaskAPI();
                 if (backendCheck) {
                     const submission_Time = new Date();
